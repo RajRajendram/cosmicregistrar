@@ -8,20 +8,19 @@ export const getPersons = async (req, res) => {
 
     console.log("Persons found:", persons.length);
 
-    res.status(200).json(persons);
+    res.status(200).json({
+      success: true,
+      data: persons,
+    });
   } catch (error) {
     console.error("GET persons error:", error);
 
     res.status(500).json({
+      success: false,
       message: "Failed to fetch persons",
-      error: error.message,
     });
   }
 };
-
-
-
-
 
 
 export const getPersonById = async (req, res) => {
@@ -29,14 +28,20 @@ export const getPersonById = async (req, res) => {
     const person = await Person.findById(req.params.id);
 
     if (!person) {
-      return res.status(404).json({ message: "Person not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Person not found",
+      });
     }
 
-    res.status(200).json(person);
+    res.status(200).json({
+      success: true,
+      data: person,
+    });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Failed to fetch person",
-      error: error.message,
     });
   }
 };
@@ -46,13 +51,14 @@ export const createPerson = async (req, res) => {
     const newPerson = await Person.create(req.body);
 
     res.status(201).json({
+      success: true,
       message: "Person created successfully",
-      person: newPerson,
+      data: newPerson,
     });
   } catch (error) {
     res.status(400).json({
+      success: false,
       message: "Failed to create person",
-      error: error.message,
     });
   }
 };
@@ -69,17 +75,21 @@ export const updatePerson = async (req, res) => {
     );
 
     if (!updatedPerson) {
-      return res.status(404).json({ message: "Person not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Person not found",
+      });
     }
 
     res.status(200).json({
+      success: true,
       message: "Person updated successfully",
-      person: updatedPerson,
+      data: updatedPerson,
     });
   } catch (error) {
     res.status(400).json({
+      success: false,
       message: "Failed to update person",
-      error: error.message,
     });
   }
 };
@@ -89,17 +99,21 @@ export const deletePerson = async (req, res) => {
     const deletedPerson = await Person.findByIdAndDelete(req.params.id);
 
     if (!deletedPerson) {
-      return res.status(404).json({ message: "Person not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Person not found",
+      });
     }
 
     res.status(200).json({
+      success: true,
       message: "Person deleted successfully",
-      person: deletedPerson,
+      data: deletedPerson,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Failed to delete person",
-      error: error.message,
     });
   }
 };

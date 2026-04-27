@@ -34,6 +34,22 @@ const personSchema = new mongoose.Schema(
       type: Number,
       min: 1,
     },
+
+    // NEW FIELDS ADDED
+    isAlive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
+    deathDate: {
+      type: Date,
+      default: null,
+    },
+    deathDateText: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   {
     timestamps: true,
