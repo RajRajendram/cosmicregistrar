@@ -35,7 +35,29 @@ const personSchema = new mongoose.Schema(
       min: 1,
     },
 
-    // NEW FIELDS ADDED
+    // NEW FIELDS
+    nameAlias: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    phoneNo: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    emailId: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+    familyGroupCode: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
     isAlive: {
       type: Boolean,
       required: true,

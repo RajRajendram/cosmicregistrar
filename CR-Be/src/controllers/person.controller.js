@@ -48,6 +48,33 @@ export const getPersonById = async (req, res) => {
 
 export const createPerson = async (req, res) => {
   try {
+    const { phoneNo, emailId, familyGroupCode } = req.body;
+
+    // Basic required check
+    if (!familyGroupCode) {
+      return res.status(400).json({
+        success: false,
+        message: "familyGroupCode is required",
+      });
+    }
+
+    // Duplicate check (phone OR email inside same family group)
+    const existingPerson = await Person.findOne({
+      familyGroupCode,
+      $or: [
+        ...(phoneNo ? [{ phoneNo }] : []),
+        ...(emailId ? [{ emailId }] : []),
+      ],
+    });
+
+    if (existingPerson) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate person: phone or email already exists in this family",
+      });
+    }
+
+    // Create person
     const newPerson = await Person.create(req.body);
 
     res.status(201).json({
@@ -56,17 +83,56 @@ export const createPerson = async (req, res) => {
       data: newPerson,
     });
   } catch (error) {
+    console.error(error);
+
     res.status(400).json({
       success: false,
-      message: "Failed to create person",
+      message: error.message || "Failed to create person",
     });
   }
 };
 
 export const updatePerson = async (req, res) => {
   try {
+    const { phoneNo, emailId, familyGroupCode } = req.body;
+    const personId = req.params.id;
+
+    // Find current person
+    const currentPerson = await Person.findById(personId);
+    if (!currentPerson) {
+      return res.status(404).json({
+        success: false,
+        message: "Person not found",
+      });
+    }
+
+    // Use existing values if not provided in update
+    const finalFamilyGroupCode =
+      familyGroupCode || currentPerson.familyGroupCode;
+
+    const finalPhone = phoneNo !== undefined ? phoneNo : currentPerson.phoneNo;
+    const finalEmail = emailId !== undefined ? emailId : currentPerson.emailId;
+
+    // Duplicate check (excluding current person)
+    const duplicatePerson = await Person.findOne({
+      _id: { $ne: personId },
+      familyGroupCode: finalFamilyGroupCode,
+      $or: [
+        ...(finalPhone ? [{ phoneNo: finalPhone }] : []),
+        ...(finalEmail ? [{ emailId: finalEmail }] : []),
+      ],
+    });
+
+    if (duplicatePerson) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate person: phone or email already exists in this family",
+      });
+    }
+
+    // Update
     const updatedPerson = await Person.findByIdAndUpdate(
-      req.params.id,
+      personId,
       req.body,
       {
         new: true,
@@ -74,22 +140,25 @@ export const updatePerson = async (req, res) => {
       }
     );
 
-    if (!updatedPerson) {
-      return res.status(404).json({
-        success: false,
-        message: "Person not found",
-      });
-    }
-
     res.status(200).json({
       success: true,
       message: "Person updated successfully",
       data: updatedPerson,
     });
   } catch (error) {
+    console.error(error);
+
+    // Handle Mongo duplicate error (if index is applied)
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate entry detected (phone/email already exists)",
+      });
+    }
+
     res.status(400).json({
       success: false,
-      message: "Failed to update person",
+      message: error.message || "Failed to update person",
     });
   }
 };
