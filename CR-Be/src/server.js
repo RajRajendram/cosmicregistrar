@@ -4,6 +4,8 @@ import cors from "cors";
 import "dotenv/config";
 
 import personRoutes from "./routes/person.routes.js";
+import relationshipRoutes from "./routes/relationship.routes.js";
+
 
 
 const app = express();
@@ -12,6 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/persons", personRoutes);
+app.use("/api/relationships", relationshipRoutes);
 
 
 // Test Route
