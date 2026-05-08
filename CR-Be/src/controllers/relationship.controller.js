@@ -22,7 +22,7 @@ export const getRelationshipById = async (req, res) => {
       return res.status(404).json({ message: "Relationship not found" });
     }
 
-    res.status(200).json(relationship);
+    res.status(200).json(relationship); 
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch relationship", error: error.message });
   }
