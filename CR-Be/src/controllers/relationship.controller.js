@@ -1,4 +1,6 @@
 import Relationship from "../models/Relationship.js";
+import Person from "../models/Person.js";
+import { sendDuplicateRelationshipEmail } from "../utils/sendDuplicateRelationshipEmail.js";
 
 export const getRelationships = async (req, res) => {
   try {
@@ -23,18 +25,89 @@ export const getRelationshipById = async (req, res) => {
       return res.status(404).json({ message: "Relationship not found" });
     }
 
-    res.status(200).json(relationship); 
+    res.status(200).json(relationship);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch relationship", error: error.message });
   }
 };
 
+// export const createRelationship = async (req, res) => {
+//   try {
+//     const relationship = await Relationship.create(req.body);
+//     res.status(201).json(relationship);
+//   } catch (error) {
+//     res.status(400).json({ message: "Failed to create relationship", error: error.message });
+//   }
+// };
+
 export const createRelationship = async (req, res) => {
   try {
+    const {
+      fromPersonId,
+      toPersonId,
+      relationshipType,
+    } = req.body;
+
+    // Prevent self relationship
+    if (fromPersonId === toPersonId) {
+      return res.status(400).json({
+        success: false,
+        message: "A person cannot have relationship with themselves",
+      });
+    }
+
+    // Check if ANY relationship already exists between these persons
+    const existingRelationship = await Relationship.findOne({
+      $or: [
+        {
+          fromPersonId,
+          toPersonId,
+        },
+        {
+          fromPersonId: toPersonId,
+          toPersonId: fromPersonId,
+        },
+      ],
+    });
+
+    // If relationship already exists
+    if (existingRelationship) {
+      // Fetch full person details
+      const fromPerson = await Person.findById(fromPersonId);
+      const toPerson = await Person.findById(toPersonId);
+
+      // Send email to admin
+      await sendDuplicateRelationshipEmail({
+        fromPerson,
+        toPerson,
+        newRelationshipType: relationshipType,
+        existingRelationshipType:
+          existingRelationship.relationshipType,
+      });
+
+      return res.status(409).json({
+        success: false,
+        message:
+          "Sorry, relationship already exists between these persons. Multiple relationships are not allowed.",
+      });
+    }
+
+    // Create relationship
     const relationship = await Relationship.create(req.body);
-    res.status(201).json(relationship);
+
+    res.status(201).json({
+      success: true,
+      message: "Relationship created successfully",
+      data: relationship,
+    });
   } catch (error) {
-    res.status(400).json({ message: "Failed to create relationship", error: error.message });
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to create relationship",
+      error: error.message,
+    });
   }
 };
 
