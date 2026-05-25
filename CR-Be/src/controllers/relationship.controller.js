@@ -12,6 +12,7 @@ export const getRelationships = async (req, res) => {
   }
 };
 
+
 export const getRelationshipById = async (req, res) => {
   try {
     const relationship = await Relationship.findById(req.params.id)
